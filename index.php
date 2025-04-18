@@ -94,6 +94,25 @@ function handlePostRequest($pdo, $input)
         $errors['email'] = 'Email is required';
     }
 
+    // Validate and hashed password
+    if (!empty($input['password'])) {
+        $password = $input['password'];
+        $options = ['cost' => 12];
+        $hashedPassword = password_hash($password, PASSWORD_BCRYPT, $options);
+    } else {
+        $errors['password'] = 'Password is required';
+    }
+
+    // Validate password confirmation
+    if (!empty($input['confirmPassword'])) {
+        $confirmPassword = $input['confirmPassword'];
+        if ($password !== $confirmPassword) {
+            $errors['confirmPassword'] = 'Password confirmation does not match';
+        }
+    } else {
+        $errors['confirmPassword'] = 'Password confirmation is required';
+    }
+
     // Validate first name
     if (!empty($input['firstName'])) {
         $firstName = ucfirst(trim($input['firstName']));
@@ -162,7 +181,20 @@ function handlePostRequest($pdo, $input)
         http_response_code(400);
         echo json_encode($errors);
     } else {
-        http_response_code(201);
-        echo "POST success";
+        $stmt = $pdo->prepare("INSERT INTO users (username, email, password, first_name, last_name, birth_date) VALUES (?, ?, ?, ?, ?, ?)");
+        $stmt->execute([$username, $email, $hashedPassword, $firstName, $lastName, $birthDate]);
+        $id = $pdo->lastInsertId();
+
+        $stmt = $pdo->prepare("SELECT id, username, email, first_name, last_name, birth_date, created_at FROM users WHERE id = ?");
+        $stmt->execute([$id]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($user) {
+            http_response_code(201);
+            echo json_encode($user);
+        } else {
+            http_response_code(404);
+            echo json_encode(['error' => 'User not found']);
+        }
     }
 }
