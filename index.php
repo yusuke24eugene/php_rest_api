@@ -79,6 +79,14 @@ function handlePostRequest($pdo, $input)
         if (!preg_match('/^[a-zA-Z0-9_-]+$/', $username)) {
             $errors['username'] = 'Username can only contain letters, numbers, underscores, and hyphens';
         }
+
+        $stmt = $pdo->prepare("SELECT username FROM users WHERE username = ?");
+        $stmt->execute([$username]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($result) {
+            $errors['username'] = 'Username is already taken';
+        }
     } else {
         $errors['username'] = 'Username is required';
     }
@@ -196,5 +204,17 @@ function handlePostRequest($pdo, $input)
             http_response_code(404);
             echo json_encode(['error' => 'User not found']);
         }
+    }
+}
+
+function handlePutRequest($pdo, $input)
+{
+    $errors = [];
+
+    // Validate username
+    if (!empty($input['username'])) {
+        //
+    } else {
+        $errors['username'] = 'Username is required';
     }
 }
