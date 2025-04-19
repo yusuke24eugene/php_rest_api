@@ -98,6 +98,14 @@ function handlePostRequest($pdo, $input)
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $errors['email'] = 'Email is invalid';
         }
+
+        $stmt = $pdo->prepare("SELECT email FROM users WHERE email = ?");
+        $stmt->execute([$email]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($result) {
+            $errors['email'] = 'Email is already taken';
+        }
     } else {
         $errors['email'] = 'Email is required';
     }
