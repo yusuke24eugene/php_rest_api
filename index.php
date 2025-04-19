@@ -28,7 +28,7 @@ switch ($method) {
         handlePutRequest($pdo, $request, $input);
         break;
     case 'DELETE':
-        //
+        handleDeleteRequest($pdo, $request);
         break;
     default:
         http_response_code(405);
@@ -386,6 +386,37 @@ function handlePutRequest($pdo, $request, $input)
                     http_response_code(404);
                     echo json_encode(['error' => 'User not found']);
                 }
+            }
+        } else {
+            http_response_code(404);
+            echo json_encode(['error' => 'Not Found']);
+        }
+    } else {
+        http_response_code(400);
+        echo json_encode(['error' => 'There is no parameter']);
+    }
+}
+
+function handleDeleteRequest($pdo, $request)
+{
+    if (!empty($request[0])) {
+        $id = $request[0];
+
+        $stmt = $pdo->prepare("SELECT id FROM users WHERE id = ?");
+        $stmt->execute([$id]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($user) {
+            $stmt = $pdo->prepare("DELETE FROM users WHERE id = ?");
+            $stmt->execute([$id]);
+
+            $stmt = $pdo->prepare("SELECT id FROM users WHERE id = ?");
+            $stmt->execute([$id]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$user) {
+                http_response_code(202);
+                echo json_encode(['message' => 'Item deleted successfully']);
             }
         } else {
             http_response_code(404);
