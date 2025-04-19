@@ -1,0 +1,30 @@
+# PHP REST API Documentation
+
+A simple PHP REST API implementation supporting basic CRUD operations.
+
+## Base URL
+
+https://localhost/php_rest_api/index.php/
+
+### GET request
+
+GET all users  
+https://localhost/php_rest_api/index.php/
+
+GET a single user  
+https://localhost/php_rest_api/index.php/1
+
+### POST request
+
+REGISTER a new user  
+https://localhost/php_rest_api/index.php/
+
+### PUT request
+
+UPDATE the info of the user
+https://localhost/php_rest_api/index.php/1
+
+### DELETE request
+
+DELETE a user  
+https://localhost/php_rest_api/index.php/1
