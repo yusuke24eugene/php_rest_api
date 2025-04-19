@@ -25,7 +25,7 @@ switch ($method) {
         handlePostRequest($pdo, $input);
         break;
     case 'PUT':
-        //
+        handlePutRequest($pdo, $request, $input);
         break;
     case 'DELETE':
         //
@@ -215,14 +215,184 @@ function handlePostRequest($pdo, $input)
     }
 }
 
-function handlePutRequest($pdo, $input)
+function handlePutRequest($pdo, $request, $input)
 {
     $errors = [];
 
-    // Validate username
-    if (!empty($input['username'])) {
-        //
+    if (!empty($request[0])) {
+        $id = $request[0];
+        $stmt = $pdo->prepare("SELECT id FROM users WHERE id = ?");
+        $stmt->execute([$id]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($result) {
+            // Validate username
+            if (!empty($input['username'])) {
+                $username = trim($input['username']);
+
+                $minLength = 3;
+                $maxLength = 15;
+
+                if (strlen($username) < $minLength) {
+                    $errors['username'] = "Username must be at least $minLength characters";
+                } else if (strlen($username) > $maxLength) {
+                    $errors['username'] = "Username must be $maxLength characters at maximum";
+                }
+
+                if (!preg_match('/^[a-zA-Z0-9_-]+$/', $username)) {
+                    $errors['username'] = 'Username can only contain letters, numbers, underscores, and hyphens';
+                }
+
+                $stmt = $pdo->prepare("SELECT username FROM users WHERE id = ?");
+                $stmt->execute([$id]);
+                $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                if ($result && $result['username'] !== $username) {
+                    $stmt = $pdo->prepare("SELECT username FROM users WHERE username = ?");
+                    $stmt->execute([$username]);
+                    $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                    if ($result) {
+                        $errors['username'] = 'Username is already taken';
+                    }
+                }
+            } else {
+                $errors['username'] = 'Username is required';
+            }
+
+            // Validate email
+            if (!empty($input['email'])) {
+                $email = trim($input['email']);
+
+                if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                    $errors['email'] = 'Email is invalid';
+                }
+
+                $stmt = $pdo->prepare("SELECT email FROM users WHERE id = ?");
+                $stmt->execute([$id]);
+                $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                if ($result && $result['email'] !== $email) {
+                    $stmt = $pdo->prepare("SELECT email FROM users WHERE email = ?");
+                    $stmt->execute([$email]);
+                    $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                    if ($result) {
+                        $errors['email'] = 'Email is already taken';
+                    }
+                }
+            } else {
+                $errors['email'] = 'Email is required';
+            }
+
+            // Validate and hashed password
+            if (!empty($input['password'])) {
+                $password = $input['password'];
+                $options = ['cost' => 12];
+                $hashedPassword = password_hash($password, PASSWORD_BCRYPT, $options);
+            } else {
+                $errors['password'] = 'Password is required';
+            }
+
+            // Validate password confirmation
+            if (!empty($input['confirmPassword'])) {
+                $confirmPassword = $input['confirmPassword'];
+                if ($password !== $confirmPassword) {
+                    $errors['confirmPassword'] = 'Password confirmation does not match';
+                }
+            } else {
+                $errors['confirmPassword'] = 'Password confirmation is required';
+            }
+
+            // Validate first name
+            if (!empty($input['firstName'])) {
+                $firstName = ucfirst(trim($input['firstName']));
+
+                $minLength = 1;
+                $maxLength = 20;
+
+                if (strlen($firstName) < $minLength) {
+                    $errors['firstName'] = "First name must be at least $minLength characters";
+                } else if (strlen($firstName) > $maxLength) {
+                    $errors['firstName'] = "First name must be $maxLength characters at maximum";
+                }
+
+                if (!preg_match("/^[a-zA-ZáéíóúÁÉÍÓÚàèìòùÀÈÌÒÙ' -]+$/", $firstName)) {
+                    $errors['firstName'] = "First name can only contain letters, spaces, apostrophes, hyphens, and accents";
+                }
+            } else {
+                $errors['firstName'] = 'First name is required';
+            }
+
+            // Validate Last name
+            if (!empty($input['lastName'])) {
+                $lastName = ucfirst(trim($input['lastName']));
+
+                $minLength = 1;
+                $maxLength = 20;
+
+                if (strlen($lastName) < $minLength) {
+                    $errors['lastName'] = "Last name must be at least $minLength characters";
+                } else if (strlen($lastName) > $maxLength) {
+                    $errors['lastName'] = "Last name must be $maxLength characters at maximum";
+                }
+
+                if (!preg_match("/^[a-zA-ZáéíóúÁÉÍÓÚàèìòùÀÈÌÒÙ' -]+$/", $lastName)) {
+                    $errors['lastName'] = "Last name can only contain letters, spaces, apostrophes, hyphens, and accents";
+                }
+            } else {
+                $errors['lastName'] = 'Last name is required';
+            }
+
+            // Validate birth date
+            if (!empty($input['birthDate'])) {
+                $birthDate = trim($input['birthDate']);
+
+                if (!preg_match("/^\d{4}-\d{2}-\d{2}$/", $birthDate)) {
+                    $errors['birthDate'] = "Invalid date format. Use YYYY-MM-DD";
+                }
+
+                list($year, $month, $day) = explode('-', $birthDate);
+
+                if (!checkdate($month, $day, $year)) {
+                    $errors['birthDate'] = "Invalid birth date";
+                }
+
+                $currentDate = new DateTime();
+                $birthdate = new DateTime($birthDate);
+
+                if ($birthdate > $currentDate) {
+                    $errors['birthDate'] = "Birth date cannot be in the future";
+                }
+            } else {
+                $errors['birthDate'] = 'Birth date is required';
+            }
+
+            if (!empty($errors)) {
+                http_response_code(400);
+                echo json_encode($errors);
+            } else {
+                $stmt = $pdo->prepare("UPDATE users SET username = ?, email = ?, password = ?, first_name = ?, last_name = ?, birth_date = ? WHERE id = ?");
+                $stmt->execute([$username, $email, $hashedPassword, $firstName, $lastName, $birthDate, $id]);
+
+                $stmt = $pdo->prepare("SELECT id, username, email, first_name, last_name, birth_date, created_at FROM users WHERE id = ?");
+                $stmt->execute([$id]);
+                $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                if ($user) {
+                    http_response_code(201);
+                    echo json_encode($user);
+                } else {
+                    http_response_code(404);
+                    echo json_encode(['error' => 'User not found']);
+                }
+            }
+        } else {
+            http_response_code(404);
+            echo json_encode(['error' => 'Not Found']);
+        }
     } else {
-        $errors['username'] = 'Username is required';
+        http_response_code(400);
+        echo json_encode(['error' => 'There is no parameter']);
     }
 }
