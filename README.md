@@ -28,3 +28,6 @@ https://localhost/php_rest_api/index.php/1
 
 DELETE a user  
 https://localhost/php_rest_api/index.php/1
+
+### JWT Authentication 
+Has Login System and implements JWT Authentication for GET requests
