@@ -1,0 +1,7 @@
+{
+    "name": "paolo/php_rest_api",
+    "description": "PHP REST api with auth",
+    "require": {
+        "firebase/php-jwt": "^6.11"
+    }
+}

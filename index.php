@@ -1,13 +1,17 @@
 <?php
 
-header("Content-Type: application/json");
+header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization");
-
+header("Access-Control-Max-Age: 3600");
+header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 
 require_once('includes/config.inc.php');
 require_once('includes/db.inc.php');
+require_once('vendor/autoload.php');
+
+use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
 
 // Get HTTP Method
 $method = $_SERVER['REQUEST_METHOD'];
@@ -19,10 +23,16 @@ $input = json_decode(file_get_contents('php://input'), true);
 // Route request
 switch ($method) {
     case 'GET':
-        handleGetRequest($pdo, $request);
+        if (validateToken($pdo)) {
+            handleGetRequest($pdo, $request);
+        }
         break;
     case 'POST':
-        handlePostRequest($pdo, $input);
+        if ($request[0] === 'login') {
+            login($pdo, $input);
+        } else if ($request[0] === 'register') {
+            handlePostRequest($pdo, $input);
+        }
         break;
     case 'PUT':
         handlePutRequest($pdo, $request, $input);
@@ -425,5 +435,106 @@ function handleDeleteRequest($pdo, $request)
     } else {
         http_response_code(400);
         echo json_encode(['error' => 'There is no parameter']);
+    }
+}
+
+function login($pdo, $input)
+{
+    $errors = [];
+
+    $username = htmlspecialchars(strip_tags($input['username']));
+    $password = $input['password'];
+
+    if (!empty($username)) {
+        $stmt = $pdo->prepare("SELECT id, username, email, password FROM users WHERE username = ?");
+        $stmt->execute([$username]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($result) {
+            if (!empty($password)) {
+                if (password_verify($password, $result['password'])) {
+                    $secret_key = "secret_key";
+                    $issuer_claim = "issuer";
+                    $audience_claim = "audience";
+                    $issuedat_claim = time();
+                    $expire_claim = $issuedat_claim + 3600; // 1 hour
+    
+                    $token = array(
+                        "iss" => $issuer_claim,
+                        "aud" => $audience_claim,
+                        "iat" => $issuedat_claim,
+                        "exp" => $expire_claim,
+                        "data" => array(
+                            "id" => $result['id'],
+                            "username" => $result['username'],
+                            "email" => $result['email']
+                        )
+                    );
+    
+                    $jwt = JWT::encode($token, $secret_key, 'HS256');
+    
+                    http_response_code(200);
+                    echo json_encode([
+                        "message" => "Login successful",
+                        "token" => $jwt,
+                        "expiresAt" => $expire_claim
+                    ]);
+                } else {
+                    $errors['password'] = 'Password is incorrect';
+                }    
+            } else {
+                $errors['password'] = 'Password is required';
+            }
+        } else {
+            $errors['username'] = 'Username does not exists';
+        }
+    } else {
+        $errors['username'] = 'Username is required';
+    }
+
+    if ($errors) {
+        http_response_code(400);
+        echo json_encode($errors);
+    }
+}
+
+function validateToken($pdo)
+{
+    $headers = getallheaders();
+    $authHeader = $headers['Authorization'] ?? '';
+
+    if (preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+        $jwt = $matches[1];
+        try {
+            $secret_key = "secret_key";
+            $decoded = JWT::decode($jwt, new Key($secret_key, 'HS256'));
+
+            if ($decoded) {
+                $stmt = $pdo->prepare("SELECT username, email FROM users WHERE id = ?");
+                $stmt->execute([$decoded->data->id]);
+                $result = $stmt->fetch(PDO::FETCH_ASSOC);
+                if ($result['username'] === $decoded->data->username && $result['email'] === $decoded->data->email) {
+                    return true;
+                } else {
+                    http_response_code(401);
+                    echo json_encode([
+                        "message" => "Access denied",
+                        "error" => $e->getMessage()
+                    ]);
+                    return false;
+                }
+            }
+        } catch (Exception $e) {
+            http_response_code(401);
+            echo json_encode([
+                "message" => "Access denied",
+                "error" => $e->getMessage()
+            ]);
+            return false;
+        }
+    } else {
+        http_response_code(401);
+        echo json_encode(["message" => "Access denied"]);
+        return false;
     }
 }
