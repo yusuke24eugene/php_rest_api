@@ -42,6 +42,9 @@ switch ($method) {
     case 'DELETE':
         handleDeleteRequest($pdo, $request);
         break;
+    case 'OPTIONS':
+        http_response_code(200); // Respond with a 200 status for OPTIONS preflight request
+        break;
     default:
         http_response_code(405);
         echo json_encode(['error' => 'Method not allowed']);
@@ -533,6 +536,7 @@ function validateToken($pdo)
                 $result = $stmt->fetch(PDO::FETCH_ASSOC);
 
                 if ($result['username'] === $decoded->data->username && $result['email'] === $decoded->data->email) {
+                    http_response_code(200);
                     return true;                  
                 } else {
                     http_response_code(401);
