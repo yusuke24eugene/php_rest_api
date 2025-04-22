@@ -32,6 +32,8 @@ switch ($method) {
             login($pdo, $input);
         } else if ($request[0] === 'register') {
             handlePostRequest($pdo, $input);
+        } else if ($request[0] === 'logout') {
+            logout($pdo);
         }
         break;
     case 'PUT':
@@ -75,7 +77,7 @@ function handlePostRequest($pdo, $input)
 
     // Validate username
     if (!empty($input['username'])) {
-        $username = trim($input['username']);
+        $username = htmlspecialchars(strip_tags(trim($input['username'])));
 
         $minLength = 3;
         $maxLength = 15;
@@ -103,7 +105,7 @@ function handlePostRequest($pdo, $input)
 
     // Validate email
     if (!empty($input['email'])) {
-        $email = trim($input['email']);
+        $email = htmlspecialchars(strip_tags(trim($input['email'])));
 
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $errors['email'] = 'Email is invalid';
@@ -122,7 +124,7 @@ function handlePostRequest($pdo, $input)
 
     // Validate and hashed password
     if (!empty($input['password'])) {
-        $password = $input['password'];
+        $password = htmlspecialchars(strip_tags(trim($input['password'])));
         $options = ['cost' => 12];
         $hashedPassword = password_hash($password, PASSWORD_BCRYPT, $options);
     } else {
@@ -131,7 +133,7 @@ function handlePostRequest($pdo, $input)
 
     // Validate password confirmation
     if (!empty($input['confirmPassword'])) {
-        $confirmPassword = $input['confirmPassword'];
+        $confirmPassword = htmlspecialchars(strip_tags(trim($input['confirmPassword'])));
         if ($password !== $confirmPassword) {
             $errors['confirmPassword'] = 'Password confirmation does not match';
         }
@@ -141,7 +143,7 @@ function handlePostRequest($pdo, $input)
 
     // Validate first name
     if (!empty($input['firstName'])) {
-        $firstName = ucfirst(trim($input['firstName']));
+        $firstName = htmlspecialchars(strip_tags(ucfirst(trim($input['firstName']))));
 
         $minLength = 1;
         $maxLength = 20;
@@ -161,7 +163,7 @@ function handlePostRequest($pdo, $input)
 
     // Validate Last name
     if (!empty($input['lastName'])) {
-        $lastName = ucfirst(trim($input['lastName']));
+        $lastName = htmlspecialchars(strip_tags(ucfirst(trim($input['lastName']))));
 
         $minLength = 1;
         $maxLength = 20;
@@ -181,7 +183,7 @@ function handlePostRequest($pdo, $input)
 
     // Validate birth date
     if (!empty($input['birthDate'])) {
-        $birthDate = trim($input['birthDate']);
+        $birthDate = htmlspecialchars(strip_tags(trim($input['birthDate'])));
 
         if (!preg_match("/^\d{4}-\d{2}-\d{2}$/", $birthDate)) {
             $errors['birthDate'] = "Invalid date format. Use YYYY-MM-DD";
@@ -238,7 +240,7 @@ function handlePutRequest($pdo, $request, $input)
         if ($result) {
             // Validate username
             if (!empty($input['username'])) {
-                $username = trim($input['username']);
+                $username = htmlspecialchars(strip_tags(trim($input['username'])));
 
                 $minLength = 3;
                 $maxLength = 15;
@@ -272,7 +274,7 @@ function handlePutRequest($pdo, $request, $input)
 
             // Validate email
             if (!empty($input['email'])) {
-                $email = trim($input['email']);
+                $email = htmlspecialchars(strip_tags(trim($input['email'])));
 
                 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
                     $errors['email'] = 'Email is invalid';
@@ -297,7 +299,7 @@ function handlePutRequest($pdo, $request, $input)
 
             // Validate and hashed password
             if (!empty($input['password'])) {
-                $password = $input['password'];
+                $password = htmlspecialchars(strip_tags(trim($input['password'])));
                 $options = ['cost' => 12];
                 $hashedPassword = password_hash($password, PASSWORD_BCRYPT, $options);
             } else {
@@ -306,7 +308,7 @@ function handlePutRequest($pdo, $request, $input)
 
             // Validate password confirmation
             if (!empty($input['confirmPassword'])) {
-                $confirmPassword = $input['confirmPassword'];
+                $confirmPassword = htmlspecialchars(strip_tags($input['confirmPassword']));
                 if ($password !== $confirmPassword) {
                     $errors['confirmPassword'] = 'Password confirmation does not match';
                 }
@@ -316,7 +318,7 @@ function handlePutRequest($pdo, $request, $input)
 
             // Validate first name
             if (!empty($input['firstName'])) {
-                $firstName = ucfirst(trim($input['firstName']));
+                $firstName = htmlspecialchars(strip_tags(ucfirst(trim($input['firstName']))));
 
                 $minLength = 1;
                 $maxLength = 20;
@@ -336,7 +338,7 @@ function handlePutRequest($pdo, $request, $input)
 
             // Validate Last name
             if (!empty($input['lastName'])) {
-                $lastName = ucfirst(trim($input['lastName']));
+                $lastName = htmlspecialchars(strip_tags(ucfirst(trim($input['lastName']))));
 
                 $minLength = 1;
                 $maxLength = 20;
@@ -356,7 +358,7 @@ function handlePutRequest($pdo, $request, $input)
 
             // Validate birth date
             if (!empty($input['birthDate'])) {
-                $birthDate = trim($input['birthDate']);
+                $birthDate = htmlspecialchars(strip_tags(trim($input['birthDate'])));
 
                 if (!preg_match("/^\d{4}-\d{2}-\d{2}$/", $birthDate)) {
                     $errors['birthDate'] = "Invalid date format. Use YYYY-MM-DD";
@@ -442,8 +444,8 @@ function login($pdo, $input)
 {
     $errors = [];
 
-    $username = htmlspecialchars(strip_tags($input['username']));
-    $password = $input['password'];
+    $username = htmlspecialchars(strip_tags(trim($input['username'])));
+    $password = htmlspecialchars(strip_tags(trim($input['password'])));
 
     if (!empty($username)) {
         $stmt = $pdo->prepare("SELECT id, username, email, password FROM users WHERE username = ?");
@@ -510,17 +512,31 @@ function validateToken($pdo)
             $decoded = JWT::decode($jwt, new Key($secret_key, 'HS256'));
 
             if ($decoded) {
+                if ($decoded->exp <= time()) {
+                    http_response_code(401);
+                    echo json_encode(["message" => "Acess denied"]);
+                    return false;
+                }
+
+                $stmt = $pdo->prepare("SELECT token FROM blacklist_token WHERE token = ?");
+                $stmt->execute([$jwt]);
+                $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                if ($result) {
+                    http_response_code(401);
+                    echo json_encode(["message" => "Access Denied"]);
+                    return false;
+                }
+
                 $stmt = $pdo->prepare("SELECT username, email FROM users WHERE id = ?");
                 $stmt->execute([$decoded->data->id]);
                 $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
                 if ($result['username'] === $decoded->data->username && $result['email'] === $decoded->data->email) {
-                    return true;
+                    return true;                  
                 } else {
                     http_response_code(401);
-                    echo json_encode([
-                        "message" => "Access denied",
-                        "error" => $e->getMessage()
-                    ]);
+                    echo json_encode(["message" => "Access denied"]);
                     return false;
                 }
             }
@@ -536,5 +552,42 @@ function validateToken($pdo)
         http_response_code(401);
         echo json_encode(["message" => "Access denied"]);
         return false;
+    }
+}
+
+function logout($pdo)
+{
+    $headers = getallheaders();
+    $authHeader = $headers['Authorization'] ?? '';
+
+    if (preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+        $jwt = $matches[1];
+        try {
+            $secret_key = "secret_key";
+            $decoded = JWT::decode($jwt, new Key($secret_key, 'HS256'));
+
+            if ($decoded) {
+                $stmt = $pdo->prepare("INSERT INTO blacklist_token (token, user_id, username, email, expiration) VALUES (?, ?, ?, ?, ?)");
+                $stmt->execute([$jwt, $decoded->data->id, $decoded->data->username, $decoded->data->email, $decoded->exp]);
+
+                $stmt = $pdo->prepare("SELECT token FROM blacklist_token WHERE token = ? AND user_id = ?");
+                $stmt->execute([$jwt, $decoded->data->id]);
+                $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                if ($result) {
+                    http_response_code(200);
+                    echo json_encode(["message" => "Logged out"]);
+                } else {
+                    http_response_code(401);
+                    echo json_encode(["message" => "Invalid token"]);
+                }
+            }
+        } catch (Exception $e) {
+            http_response_code(401);
+            echo json_encode([
+                "message" => "Tokken error",
+                "error" => $e->getMessage()
+            ]);
+        }
     }
 }
