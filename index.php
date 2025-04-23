@@ -497,6 +497,10 @@ function login($pdo, $input)
         $errors['username'] = 'Username is required';
     }
 
+    if (empty($password)) {
+        $errors['password'] = 'Password is required';
+    }
+
     if ($errors) {
         http_response_code(400);
         echo json_encode($errors);
