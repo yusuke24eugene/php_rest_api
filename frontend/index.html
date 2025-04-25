@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home</title>
+    <link rel="stylesheet" href="styles/index.css">
+</head>
+
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="logo">
+                <a href="index.html">Users API</a>
+            </div>
+            <form onsubmit="logout(event)" method="post">
+                <button type="submit" class="logout-btn">LOG OUT</button>
+            </form>
+            <div class="hamburger" id="hamburger">
+                &#9776; <!-- Hamburger icon -->
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <h1 class="title">Data from API</h1>
+        <div class="container">
+            <table id="data-table" class="content">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>First Name</th>
+                        <th>Last Name</th>
+                        <th>Birth Date</th>
+                        <th>Created At</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Data will be inserted here -->
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>&copy; <span id="year"></span> Users API. All rights reserved.</p>
+    </footer>
+
+    <script src="scripts/index.js"></script>
+</body>
+
+</html>

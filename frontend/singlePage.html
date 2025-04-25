@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Info</title>
+    <link rel="stylesheet" href="styles/singlePage.css">
+</head>
+
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="logo">
+                <a href="index.html">Users API</a>
+            </div>
+            <form onsubmit="logout(event)" method="post">
+                <button type="submit" class="logout-btn">LOG OUT</button>
+            </form>
+            <div class="hamburger" id="hamburger">
+                &#9776; <!-- Hamburger icon -->
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <h1 class="title">User Info</h1>
+        <div class="container">
+            <h2 id="username">JohnDoe</h2>
+            <p><span class="detail-label">ID:</span> <span id="id"></span></p>
+            <p><span class="detail-label">Email:</span> <span id="email"></span></p>
+            <p><span class="detail-label">First Name:</span> <span id="firstName"></span></p>
+            <p><span class="detail-label">Last Name:</span> <span id="lastName"></span></p>
+            <p><span class="detail-label">Birth Date:</span> <span id="birthDate"></span></p>
+
+            <!-- Action Buttons for Update and Delete -->
+            <div class="action-buttons">
+                <button class="button button-update"
+                    onclick="window.location.href = 'update.html?id=' + new URLSearchParams(window.location.search).get('id')">Update</button>
+                <button class="button button-delete"
+                    onclick="alert('Are you sure you want to delete this user?')">Delete</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>&copy; <span id="year"></span> Users API. All rights reserved.</p>
+    </footer>
+
+    <script src="scripts/singlePage.js"></script>
+</body>
+
+</html>

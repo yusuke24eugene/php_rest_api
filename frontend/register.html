@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register User</title>
+    <link rel="stylesheet" href="styles/register.css">
+</head>
+
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="logo">
+                <a href="index.html">Users API</a>
+            </div>
+            <ul class="nav-links">
+                <li><a href="login.html">LOG IN</a></li>
+            </ul>
+            <div class="hamburger" id="hamburger">
+                &#9776; <!-- Hamburger icon -->
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <div class="container">
+            <div class="register-container">
+                <form id="loginForm" onsubmit="submitForm(event)" class="login-form">
+                    <h2>Register</h2>
+                    <div class="input-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" name="username" placeholder="Enter your username"
+                            class="input-field">
+                        <div class="error-message" id="usernameError"></div>
+                    </div>
+                    <div class="input-group">
+                        <label for="email">Email</label>
+                        <input type="text" id="email" name="email" placeholder="Enter your email" class="input-field">
+                        <div class="error-message" id="emailError"></div>
+                    </div>
+                    <div class="input-group">
+                        <label for="firstName">First Name</label>
+                        <input type="text" id="firstName" name="firstName" placeholder="Enter your First Name"
+                            class="input-field">
+                        <div class="error-message" id="firstNameError"></div>
+                    </div>
+                    <div class="input-group">
+                        <label for="lastName">Last Name</label>
+                        <input type="text" id="lastName" name="lastName" placeholder="Enter your Last Name"
+                            class="input-field">
+                        <div class="error-message" id="lastNameError"></div>
+                    </div>
+                    <div class="input-group">
+                        <label for="birthDate">Birth Date</label>
+                        <input type="date" id="birthDate" name="birthDate" class=" input-field">
+                        <div class="error-message" id="birthDateError"></div>
+                    </div>
+                    <div class="input-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" placeholder="Enter your password"
+                            class="input-field">
+                        <div class="error-message" id="passwordError"></div>
+                    </div>
+                    <div class="input-group">
+                        <label for="confirmPassword">Confirm Password</label>
+                        <input type="password" id="confirmPassword" name="confirmPassword"
+                            placeholder="Confirm your password" class="input-field">
+                        <div class="error-message" id="confirmPasswordError"></div>
+                    </div>
+                    <button type="submit" class="btn">Log In</button>
+                    <div class="extra-links">
+                        <a href="login.html">Already have an account?</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>&copy; <span id="year"></span> Users API. All rights reserved.</p>
+    </footer>
+
+    <script src="scripts/register.js"></script>
+</body>
+
+</html>

@@ -34,13 +34,19 @@ switch ($method) {
             handlePostRequest($pdo, $input);
         } else if ($request[0] === 'logout') {
             logout($pdo);
-        }
+        }/* else if ($request[0] === 'decode') {
+            decodeToken($pdo);
+        }*/
         break;
     case 'PUT':
-        handlePutRequest($pdo, $request, $input);
+        if (validateToken()) {
+            handlePutRequest($pdo, $request, $input);
+        }
         break;
     case 'DELETE':
-        handleDeleteRequest($pdo, $request);
+        if (validateToken()) {
+            handleDeleteRequest($pdo, $request);
+        }
         break;
     case 'OPTIONS':
         http_response_code(200); // Respond with a 200 status for OPTIONS preflight request
@@ -599,3 +605,53 @@ function logout($pdo)
         }
     }
 }
+
+/*function decodeToken($pdo) {
+    $headers = getallheaders();
+    $authHeader = $headers['Authorization'] ?? '';
+
+    if (preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+        $jwt = $matches[1];
+        try {
+            $secret_key = "secret_key";
+            $decoded = JWT::decode($jwt, new Key($secret_key, 'HS256'));
+
+            if ($decoded) {
+                if ($decoded->exp <= time()) {
+                    http_response_code(401);
+                    echo json_encode(["message" => "Acess denied"]);
+                }
+
+                $stmt = $pdo->prepare("SELECT token FROM blacklist_token WHERE token = ?");
+                $stmt->execute([$jwt]);
+                $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                if ($result) {
+                    http_response_code(401);
+                    echo json_encode(["message" => "Access Denied"]);
+                }
+
+                $stmt = $pdo->prepare("SELECT id, username, email FROM users WHERE id = ?");
+                $stmt->execute([$decoded->data->id]);
+                $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                if ($result['username'] === $decoded->data->username && $result['email'] === $decoded->data->email) {
+                    http_response_code(200);
+                    echo json_encode($result);
+                } else {
+                    http_response_code(401);
+                    echo json_encode(["message" => "Access denied"]);
+                }
+            }
+        } catch (Exception $e) {
+            http_response_code(401);
+            echo json_encode([
+                "message" => "Access denied",
+                "error" => $e->getMessage()
+            ]);
+        }
+    } else {
+        http_response_code(401);
+        echo json_encode(["message" => "Access denied"]);
+    }
+}*/
