@@ -25,18 +25,23 @@ function fetchData() {
 
       const username = document.querySelector("#username");
       username.textContent = data.username;
+      sessionStorage.setItem('username', data.username);
 
       const email = document.querySelector("#email");
       email.textContent = data.email;
+      sessionStorage.setItem('email', data.email);
 
       const firstName = document.querySelector("#firstName");
       firstName.textContent = data.first_name;
+      sessionStorage.setItem('firstName', data.first_name);
 
       const lastName = document.querySelector("#lastName");
       lastName.textContent = data.last_name;
+      sessionStorage.setItem('lastName', data.last_name);
 
       const birthDate = document.querySelector("#birthDate");
       birthDate.textContent = data.birth_date;
+      sessionStorage.setItem('birthDate', data.birth_date);
     })
     .catch((error) => {
       console.error("Error fetching data:", error);
@@ -73,4 +78,34 @@ async function logout(event) {
       console.error("Error fetching data:", error);
       window.location.href = 'login.html';
     }
+}
+
+async function destroy() {
+  if(confirm('Are you sure you want to delete?')) {
+    const searchParams = new URLSearchParams(window.location.search);
+    const userId = searchParams.get('id');
+  
+    fetch(apiUrl + userId, {
+      method: "DELETE",
+      headers: {
+        "Authorization": `Bearer ${bearerToken}`,
+        "Content-Type": "application/json"
+      },
+    })
+      .then((response) => {
+        console.log('Message: ' + response.json());
+  
+        if (response.ok) {
+          alert("Successfully deleted!");
+          window.location.href = 'login.html';
+        } else {
+          alert("There is an error!");
+          window.location.href = 'login.html';
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching data:", error);
+        window.location.href = 'login.html';
+      });  
+  }
 }

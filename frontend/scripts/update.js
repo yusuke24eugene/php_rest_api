@@ -56,8 +56,43 @@ async function submitForm(event) {
             let jsonResponse = await response.json();
             console.log("Response from API: ", jsonResponse);
 
+            let data = {
+                username: document.getElementById("username").value,
+                password: document.getElementById("password").value
+            };
+
             // Handle the response (e.g., show a success message or redirect)
-            window.location.href = 'index.html';
+            try {
+                // Send the POST request using fetch
+                let response = await fetch("http://localhost/php_rest_api/index.php/login", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(data)  // Convert data to JSON
+                });
+                
+                // Check if the response status is OK (status 200)
+                if (response.ok) {
+                    // Parse the JSON response
+                    let jsonResponse = await response.json();
+                    console.log("Response from API: ", jsonResponse);
+        
+                    // Handle the response (e.g., show a success message or redirect)
+                    // Save Bearer Token in localStorage
+                    localStorage.setItem('access_token', jsonResponse.token);
+                    window.location.href = 'index.html';
+                } else {
+                    // Handle error if the response is not OK
+                    let errors = await response.json();
+                    window.location.href = 'login.html';
+                }
+            } catch (error) {
+                // Handle network errors
+                console.error("Error: ", error);
+                alert("An error occurred, please try again.");
+                window.location.href = 'login.html';
+            }
         } else {
             // Handle error if the response is not OK
             let errors = await response.json();
@@ -115,3 +150,13 @@ async function submitForm(event) {
         //window.location.href = 'login.html';
     }
 }
+
+function fillFormData() {
+    document.querySelector('#username').value = sessionStorage.getItem('username');
+    document.querySelector('#email').value = sessionStorage.getItem('email');
+    document.querySelector('#firstName').value = sessionStorage.getItem('firstName');
+    document.querySelector('#lastName').value = sessionStorage.getItem('lastName');
+    document.querySelector('#birthDate').value = sessionStorage.getItem('birthDate');
+}
+
+window.onload = fillFormData;
