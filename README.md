@@ -1,5 +1,7 @@
 # PHP REST API Documentation
 
+![PHP REST API Screenshot](screenshot.png) <!-- Replace with actual screenshot if available -->
+
 A simple PHP REST API implementation supporting basic CRUD operations.
 
 ## Base URL
